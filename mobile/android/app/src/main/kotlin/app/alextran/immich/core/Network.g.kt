@@ -145,6 +145,37 @@ data class ClientCertPrompt (
 
   override fun hashCode(): Int = toList().hashCode()
 }
+
+/** Generated class from Pigeon that represents data sent in messages. */
+data class WebSocketTaskResult (
+  val taskPointer: Long,
+  val taskProtocol: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): WebSocketTaskResult {
+      val taskPointer = pigeonVar_list[0] as Long
+      val taskProtocol = pigeonVar_list[1] as String?
+      return WebSocketTaskResult(taskPointer, taskProtocol)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      taskPointer,
+      taskProtocol,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is WebSocketTaskResult) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return NetworkPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
 private open class NetworkPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -156,6 +187,11 @@ private open class NetworkPigeonCodec : StandardMessageCodec() {
       130.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           ClientCertPrompt.fromList(it)
+        }
+      }
+      131.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          WebSocketTaskResult.fromList(it)
         }
       }
       else -> super.readValueOfType(type, buffer)
@@ -171,6 +207,10 @@ private open class NetworkPigeonCodec : StandardMessageCodec() {
         stream.write(130)
         writeValue(stream, value.toList())
       }
+      is WebSocketTaskResult -> {
+        stream.write(131)
+        writeValue(stream, value.toList())
+      }
       else -> super.writeValue(stream, value)
     }
   }
@@ -183,6 +223,11 @@ interface NetworkApi {
   fun selectCertificate(promptText: ClientCertPrompt, callback: (Result<ClientCertData>) -> Unit)
   fun removeCertificate(callback: (Result<Unit>) -> Unit)
   fun getClientPointer(): Long
+  /**
+   * Creates a WebSocket task and waits for connection to be established.
+   * iOS only - Android should use OkHttpWebSocket.connectWithClient directly.
+   */
+  fun createWebSocketTask(url: String, protocols: List<String>?, callback: (Result<WebSocketTaskResult>) -> Unit)
 
   companion object {
     /** The codec used by NetworkApi. */
@@ -259,6 +304,27 @@ interface NetworkApi {
               NetworkPigeonUtils.wrapError(exception)
             }
             reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.immich_mobile.NetworkApi.createWebSocketTask$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val urlArg = args[0] as String
+            val protocolsArg = args[1] as List<String>?
+            api.createWebSocketTask(urlArg, protocolsArg) { result: Result<WebSocketTaskResult> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(NetworkPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(NetworkPigeonUtils.wrapResult(data))
+              }
+            }
           }
         } else {
           channel.setMessageHandler(null)

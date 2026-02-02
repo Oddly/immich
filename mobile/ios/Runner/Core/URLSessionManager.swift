@@ -7,6 +7,7 @@ class URLSessionManager: NSObject {
   static let shared = URLSessionManager()
   
   let session: URLSession
+  let delegate: URLSessionManagerDelegate
   private let configuration = {
     let config = URLSessionConfiguration.default
     
@@ -36,12 +37,85 @@ class URLSessionManager: NSObject {
   }
   
   private override init() {
-    session = URLSession(configuration: configuration, delegate: URLSessionManagerDelegate(), delegateQueue: nil)
+    delegate = URLSessionManagerDelegate()
+    session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
     super.init()
+  }
+  
+  /// Creates a WebSocket task and waits for connection to be established.
+  func createWebSocketTask(
+    url: URL,
+    protocols: [String]?,
+    completion: @escaping (Result<(URLSessionWebSocketTask, String?), Error>) -> Void
+  ) {
+    let task: URLSessionWebSocketTask
+    if let protocols = protocols, !protocols.isEmpty {
+      task = session.webSocketTask(with: url, protocols: protocols)
+    } else {
+      task = session.webSocketTask(with: url)
+    }
+    
+    delegate.registerWebSocketTask(task) { result in
+      completion(result)
+    }
+    task.resume()
   }
 }
 
-class URLSessionManagerDelegate: NSObject, URLSessionTaskDelegate {
+enum WebSocketError: Error {
+  case connectionFailed(String)
+  case invalidURL(String)
+}
+
+class URLSessionManagerDelegate: NSObject, URLSessionTaskDelegate, URLSessionWebSocketDelegate {
+  private var webSocketCompletions: [URLSessionWebSocketTask: (Result<(URLSessionWebSocketTask, String?), Error>) -> Void] = [:]
+  private let lock = NSLock()
+  
+  func registerWebSocketTask(
+    _ task: URLSessionWebSocketTask,
+    completion: @escaping (Result<(URLSessionWebSocketTask, String?), Error>) -> Void
+  ) {
+    lock.lock()
+    webSocketCompletions[task] = completion
+    lock.unlock()
+  }
+  
+  func urlSession(
+    _ session: URLSession,
+    webSocketTask: URLSessionWebSocketTask,
+    didOpenWithProtocol protocol: String?
+  ) {
+    lock.lock()
+    let completion = webSocketCompletions.removeValue(forKey: webSocketTask)
+    lock.unlock()
+    completion?(.success((webSocketTask, `protocol`)))
+  }
+  
+  func urlSession(
+    _ session: URLSession,
+    webSocketTask: URLSessionWebSocketTask,
+    didCloseWith closeCode: URLSessionWebSocketTask.CloseCode,
+    reason: Data?
+  ) {
+    // Close events are handled by CupertinoWebSocket via task.closeCode/closeReason
+  }
+  
+  func urlSession(
+    _ session: URLSession,
+    task: URLSessionTask,
+    didCompleteWithError error: Error?
+  ) {
+    guard let webSocketTask = task as? URLSessionWebSocketTask else { return }
+    
+    lock.lock()
+    let completion = webSocketCompletions.removeValue(forKey: webSocketTask)
+    lock.unlock()
+    
+    if let error = error {
+      completion?(.failure(error))
+    }
+  }
+  
   func urlSession(
     _ session: URLSession,
     didReceive challenge: URLAuthenticationChallenge,

@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/domain/models/store.model.dart';
 import 'package:immich_mobile/entities/asset.entity.dart';
 import 'package:immich_mobile/entities/store.entity.dart';
+import 'package:immich_mobile/infrastructure/repositories/network.repository.dart';
 import 'package:immich_mobile/models/server_info/server_version.model.dart';
 import 'package:immich_mobile/providers/asset.provider.dart';
 import 'package:immich_mobile/providers/auth.provider.dart';
@@ -111,6 +112,7 @@ class WebsocketNotifier extends StateNotifier<WebsocketState> {
           OptionBuilder()
               .setPath("${endpoint.path}/socket.io")
               .setTransports(['websocket'])
+              .setWebSocketConnector(NetworkRepository.createWebSocket)
               .enableReconnection()
               .enableForceNew()
               .enableForceNewConnection()
