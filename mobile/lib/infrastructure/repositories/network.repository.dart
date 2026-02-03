@@ -60,7 +60,7 @@ class NetworkRepository {
     final result = await networkApi.createWebSocketTask(uri.toString(), protocols?.toList());
     final pointer = Pointer.fromAddress(result.taskPointer);
     final task = URLSessionWebSocketTask.fromRawPointer(pointer.cast());
-    return CupertinoWebSocket.fromConnectedTask(task, protocol: result.protocol ?? '');
+    return CupertinoWebSocket.fromConnectedTask(task, protocol: result.taskProtocol ?? '');
   }
 
   static Future<WebSocket> _createAndroidWebSocket(Uri uri, {Iterable<String>? protocols}) {

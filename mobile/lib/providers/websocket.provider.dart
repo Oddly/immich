@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -13,7 +12,6 @@ import 'package:immich_mobile/providers/auth.provider.dart';
 import 'package:immich_mobile/providers/background_sync.provider.dart';
 import 'package:immich_mobile/providers/db.provider.dart';
 import 'package:immich_mobile/providers/server_info.provider.dart';
-import 'package:immich_mobile/services/api.service.dart';
 import 'package:immich_mobile/services/sync.service.dart';
 import 'package:immich_mobile/utils/debounce.dart';
 import 'package:immich_mobile/utils/debug_print.dart';
@@ -100,11 +98,6 @@ class WebsocketNotifier extends StateNotifier<WebsocketState> {
     if (authenticationState.isAuthenticated) {
       try {
         final endpoint = Uri.parse(Store.get(StoreKey.serverEndpoint));
-        final headers = ApiService.getRequestHeaders();
-        if (endpoint.userInfo.isNotEmpty) {
-          headers["Authorization"] = "Basic ${base64.encode(utf8.encode(endpoint.userInfo))}";
-        }
-
         dPrint(() => "Attempting to connect to websocket");
         // Configure socket transports must be specified
         Socket socket = io(
@@ -117,7 +110,6 @@ class WebsocketNotifier extends StateNotifier<WebsocketState> {
               .enableForceNew()
               .enableForceNewConnection()
               .enableAutoConnect()
-              .setExtraHeaders(headers)
               .build(),
         );
 

@@ -228,6 +228,7 @@ interface NetworkApi {
    * iOS only - Android should use OkHttpWebSocket.connectWithClient directly.
    */
   fun createWebSocketTask(url: String, protocols: List<String>?, callback: (Result<WebSocketTaskResult>) -> Unit)
+  fun setRequestHeaders(headers: Map<String, String>)
 
   companion object {
     /** The codec used by NetworkApi. */
@@ -325,6 +326,24 @@ interface NetworkApi {
                 reply.reply(NetworkPigeonUtils.wrapResult(data))
               }
             }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.immich_mobile.NetworkApi.setRequestHeaders$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val headersArg = args[0] as Map<String, String>
+            val wrapped: List<Any?> = try {
+              api.setRequestHeaders(headersArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              NetworkPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)

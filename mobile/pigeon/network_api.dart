@@ -52,4 +52,6 @@ abstract class NetworkApi {
   /// iOS only - Android should use OkHttpWebSocket.connectWithClient directly.
   @async
   WebSocketTaskResult createWebSocketTask(String url, List<String>? protocols);
+
+  void setRequestHeaders(Map<String, String> headers);
 }

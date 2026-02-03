@@ -261,6 +261,7 @@ protocol NetworkApi {
   /// Creates a WebSocket task and waits for connection to be established.
   /// iOS only - Android should use OkHttpWebSocket.connectWithClient directly.
   func createWebSocketTask(url: String, protocols: [String]?, completion: @escaping (Result<WebSocketTaskResult, Error>) -> Void)
+  func setRequestHeaders(headers: [String: String]) throws
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -350,6 +351,21 @@ class NetworkApiSetup {
       }
     } else {
       createWebSocketTaskChannel.setMessageHandler(nil)
+    }
+    let setRequestHeadersChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.immich_mobile.NetworkApi.setRequestHeaders\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      setRequestHeadersChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let headersArg = args[0] as! [String: String]
+        do {
+          try api.setRequestHeaders(headers: headersArg)
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      setRequestHeadersChannel.setMessageHandler(nil)
     }
   }
 }

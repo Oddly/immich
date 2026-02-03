@@ -67,6 +67,10 @@ class NetworkApiImpl: NetworkApi {
       }
     }
   }
+  
+  func setRequestHeaders(headers: [String : String]) throws {
+    URLSessionManager.shared.session.configuration.httpAdditionalHeaders = headers
+  }
 }
 
 private class CertImporter: NSObject, UIDocumentPickerDelegate {
