@@ -258,8 +258,7 @@ protocol NetworkApi {
   func selectCertificate(promptText: ClientCertPrompt, completion: @escaping (Result<ClientCertData, Error>) -> Void)
   func removeCertificate(completion: @escaping (Result<Void, Error>) -> Void)
   func getClientPointer() throws -> Int64
-  /// Creates a WebSocket task and waits for connection to be established.
-  /// iOS only - Android should use OkHttpWebSocket.connectWithClient directly.
+  /// iOS only - creates a WebSocket task and waits for connection to be established.
   func createWebSocketTask(url: String, protocols: [String]?, completion: @escaping (Result<WebSocketTaskResult, Error>) -> Void)
   func setRequestHeaders(headers: [String: String]) throws
 }
@@ -332,8 +331,7 @@ class NetworkApiSetup {
     } else {
       getClientPointerChannel.setMessageHandler(nil)
     }
-    /// Creates a WebSocket task and waits for connection to be established.
-    /// iOS only - Android should use OkHttpWebSocket.connectWithClient directly.
+    /// iOS only - creates a WebSocket task and waits for connection to be established.
     let createWebSocketTaskChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.immich_mobile.NetworkApi.createWebSocketTask\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       createWebSocketTaskChannel.setMessageHandler { message, reply in

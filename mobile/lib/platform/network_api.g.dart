@@ -300,8 +300,7 @@ class NetworkApi {
     }
   }
 
-  /// Creates a WebSocket task and waits for connection to be established.
-  /// iOS only - Android should use OkHttpWebSocket.connectWithClient directly.
+  /// iOS only - creates a WebSocket task and waits for connection to be established.
   Future<WebSocketTaskResult> createWebSocketTask(String url, List<String>? protocols) async {
     final String pigeonVar_channelName =
         'dev.flutter.pigeon.immich_mobile.NetworkApi.createWebSocketTask$pigeonVar_messageChannelSuffix';

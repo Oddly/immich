@@ -48,8 +48,7 @@ abstract class NetworkApi {
 
   int getClientPointer();
 
-  /// Creates a WebSocket task and waits for connection to be established.
-  /// iOS only - Android should use OkHttpWebSocket.connectWithClient directly.
+  /// iOS only - creates a WebSocket task and waits for connection to be established.
   @async
   WebSocketTaskResult createWebSocketTask(String url, List<String>? protocols);
 

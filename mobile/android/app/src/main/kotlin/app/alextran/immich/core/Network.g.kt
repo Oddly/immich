@@ -223,10 +223,7 @@ interface NetworkApi {
   fun selectCertificate(promptText: ClientCertPrompt, callback: (Result<ClientCertData>) -> Unit)
   fun removeCertificate(callback: (Result<Unit>) -> Unit)
   fun getClientPointer(): Long
-  /**
-   * Creates a WebSocket task and waits for connection to be established.
-   * iOS only - Android should use OkHttpWebSocket.connectWithClient directly.
-   */
+  /** iOS only - creates a WebSocket task and waits for connection to be established. */
   fun createWebSocketTask(url: String, protocols: List<String>?, callback: (Result<WebSocketTaskResult>) -> Unit)
   fun setRequestHeaders(headers: Map<String, String>)
 
